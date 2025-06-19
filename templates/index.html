@@ -134,6 +134,16 @@
                 </div>
             </div>
 
+            <!-- Conversation Actions -->
+            <div class="conversation-actions">
+                <button id="sketchbookButton" class="action-button sketchbook-button">
+                    📝 Enter Sketchbook Stage
+                </button>
+                <button id="resetButton" class="action-button reset-button">
+                    📄 Upload Different Story
+                </button>
+            </div>
+
             <!-- Quick Instructions -->
             <div class="quick-instructions">
                 <h3>💡 Quick Tips</h3>
@@ -151,17 +161,10 @@
                         <span class="tip-text">Discuss characters and plot</span>
                     </div>
                     <div class="tip">
-                        <span class="tip-icon">🔄</span>
-                        <span class="tip-text">Upload new story anytime</span>
+                        <span class="tip-icon">📝</span>
+                        <span class="tip-text">Use Sketchbook to review transcripts</span>
                     </div>
                 </div>
-            </div>
-
-            <!-- Reset Button -->
-            <div class="reset-section">
-                <button id="resetButton" class="reset-button">
-                    📄 Upload Different Story
-                </button>
             </div>
         </div>
 
@@ -410,6 +413,25 @@
         function setupButtons() {
             resetButton.addEventListener('click', resetApplication);
             retryButton.addEventListener('click', resetApplication);
+            
+            // Add sketchbook button listener
+            const sketchbookButton = document.getElementById('sketchbookButton');
+            sketchbookButton.addEventListener('click', enterSketchbookStage);
+        }
+        
+        function enterSketchbookStage() {
+            if (!currentAgentId) {
+                alert('Please set up your story agent first before entering the sketchbook stage.');
+                return;
+            }
+            
+            // Store agent ID in session storage for the sketchbook page
+            sessionStorage.setItem('currentAgentId', currentAgentId);
+            sessionStorage.setItem('storyName', document.getElementById('displayStoryName').textContent);
+            sessionStorage.setItem('userName', document.getElementById('displayUserName').textContent);
+            
+            // Redirect to sketchbook page
+            window.location.href = '/sketchbook';
         }
 
         function resetApplication() {

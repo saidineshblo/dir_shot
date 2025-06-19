@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ElevenLabs Story Agent - WebSocket Chat</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .voice-controls {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        .voice-button {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            background: #ff6b6b;
+            color: white;
+        }
+        .voice-button:hover {
+            background: #ff5252;
+            transform: scale(1.05);
+        }
+        .voice-button.recording {
+            background: #4caf50;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
+        }
+        .conversation-display {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            background: #f9f9f9;
+        }
+        .message {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 8px;
+            max-width: 80%;
+        }
+        .user-message {
+            background: #e3f2fd;
+            margin-left: auto;
+            text-align: right;
+        }
+        .agent-message {
+            background: #f1f8e9;
+        }
+        .system-message {
+            background: #fff3e0;
+            text-align: center;
+            font-style: italic;
+            color: #666;
+        }
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .status-connected {
+            background: #e8f5e8;
+            color: #2e7d2e;
+        }
+        .status-disconnected {
+            background: #ffeaa7;
+            color: #d63031;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🎙️ WebSocket Voice Chat</h1>
+            <p>Upload your story and chat using WebSocket technology</p>
+        </header>
+
+        <!-- Upload Section -->
+        <div id="uploadSection" class="upload-section">
+            <h2>🚀 Get Started</h2>
+            <p class="section-description">
+                Upload your PDF story and our AI will become an expert on it using WebSocket for real-time conversation.
+            </p>
+
+            <form id="uploadForm" class="upload-form" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="userId" class="form-label">👤 Your Name <span class="required">*</span></label>
+                    <input type="text" id="userId" name="user_id" class="form-input" required placeholder="Enter your name">
+                </div>
+
+                <div class="form-group">
+                    <label for="storyName" class="form-label">📖 Story Title <span class="required">*</span></label>
+                    <input type="text" id="storyName" name="story_name" class="form-input" required placeholder="What's your story called?">
+                </div>
+
+                <div class="form-group">
+                    <label for="pdfFile" class="form-label">📄 Upload Your Story (PDF) <span class="required">*</span></label>
+                    <div class="file-upload-area" id="fileUploadArea">
+                        <div class="file-upload-content">
+                            <div class="file-upload-icon">📁</div>
+                            <p class="file-upload-text">Click to select your PDF story or drag and drop here</p>
+                            <p class="file-upload-details">Maximum file size: 10MB | PDF files only</p>
+                        </div>
+                        <input type="file" id="pdfFile" name="file" class="file-input" accept=".pdf,application/pdf" required>
+                    </div>
+                    <div id="fileInfo" class="file-info" style="display: none;"></div>
+                </div>
+
+                <button type="submit" class="submit-button" id="submitButton">
+                    <span class="button-text">🚀 Upload & Start WebSocket Chat</span>
+                    <div class="button-loader" style="display: none;"></div>
+                </button>
+            </form>
+        </div>
+
+        <!-- Processing Section -->
+        <div id="processingSection" class="processing-section" style="display: none;">
+            <div class="processing-content">
+                <div class="big-loader"></div>
+                <h2>🔧 Setting up your AI story expert...</h2>
+                <p id="processingStatus">Uploading your story...</p>
+                <div class="processing-steps">
+                    <div class="step" id="step1">
+                        <span class="step-icon">📄</span>
+                        <span class="step-text">Uploading story to AI</span>
+                        <span class="step-status">⏳</span>
+                    </div>
+                    <div class="step" id="step2">
+                        <span class="step-icon">🧠</span>
+                        <span class="step-text">Configuring AI agent</span>
+                        <span class="step-status">⏳</span>
+                    </div>
+                    <div class="step" id="step3">
+                        <span class="step-icon">🎙️</span>
+                        <span class="step-text">Connecting WebSocket</span>
+                        <span class="step-status">⏳</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Conversation Section -->
+        <div id="conversationSection" class="conversation-section" style="display: none;">
+            <div class="conversation-header">
+                <h2>💬 WebSocket Voice Chat</h2>
+                <p class="story-info">
+                    <strong>Story:</strong> <span id="displayStoryName"></span> | 
+                    <strong>User:</strong> <span id="displayUserName"></span>
+                </p>
+            </div>
+
+            <!-- Connection Status -->
+            <div id="connectionStatus" class="status-indicator status-disconnected">
+                <span>🔴</span>
+                <span>Connecting to AI...</span>
+            </div>
+
+            <!-- Voice Controls -->
+            <div class="voice-controls">
+                <button id="micButton" class="voice-button" title="Start Recording">🎤</button>
+                <button id="stopButton" class="voice-button" title="Stop Recording" style="display: none;">⏹️</button>
+            </div>
+
+            <!-- Text Input -->
+            <div class="form-group">
+                <label for="textInput" class="form-label">💬 Or type your message:</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="textInput" class="form-input" placeholder="Type your message here..." style="flex: 1;">
+                    <button id="sendTextButton" class="submit-button">Send</button>
+                </div>
+            </div>
+
+            <!-- Conversation Display -->
+            <div id="conversationDisplay" class="conversation-display">
+                <div class="message system-message">Conversation will appear here...</div>
+            </div>
+
+            <!-- Reset Button -->
+            <div class="reset-section">
+                <button id="resetButton" class="reset-button">📄 Upload Different Story</button>
+            </div>
+        </div>
+
+        <!-- Error Section -->
+        <div id="errorSection" class="error-section" style="display: none;">
+            <h3>❌ Something went wrong</h3>
+            <div id="errorMessage" class="error-content"></div>
+            <button id="retryButton" class="retry-button">🔄 Try Again</button>
+        </div>
+
+        <footer class="footer">
+            <p>💡 Powered by ElevenLabs WebSocket API | Real-time voice conversations!</p>
+        </footer>
+    </div>
+
+    <script>
+        // Application state
+        let currentAgentId = null;
+        let websocket = null;
+        let mediaRecorder = null;
+        let isRecording = false;
+
+        // DOM elements
+        const uploadSection = document.getElementById('uploadSection');
+        const processingSection = document.getElementById('processingSection');
+        const conversationSection = document.getElementById('conversationSection');
+        const errorSection = document.getElementById('errorSection');
+        const uploadForm = document.getElementById('uploadForm');
+        const micButton = document.getElementById('micButton');
+        const stopButton = document.getElementById('stopButton');
+        const textInput = document.getElementById('textInput');
+        const sendTextButton = document.getElementById('sendTextButton');
+        const conversationDisplay = document.getElementById('conversationDisplay');
+        const connectionStatus = document.getElementById('connectionStatus');
+        const fileUploadArea = document.getElementById('fileUploadArea');
+        const fileInfo = document.getElementById('fileInfo');
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            uploadForm.addEventListener('submit', handleFormSubmit);
+            micButton.addEventListener('click', startRecording);
+            stopButton.addEventListener('click', stopRecording);
+            sendTextButton.addEventListener('click', sendTextMessage);
+            textInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') sendTextMessage();
+            });
+            document.getElementById('resetButton').addEventListener('click', resetApplication);
+            document.getElementById('retryButton').addEventListener('click', resetApplication);
+            
+            // File upload
+            document.getElementById('pdfFile').addEventListener('change', function(e) {
+                if (e.target.files.length > 0) {
+                    displayFileInfo(e.target.files[0]);
+                }
+            });
+            
+            fileUploadArea.addEventListener('click', function() {
+                document.getElementById('pdfFile').click();
+            });
+        }
+
+        function displayFileInfo(file) {
+            const fileSize = (file.size / 1024 / 1024).toFixed(2);
+            fileInfo.innerHTML = `
+                <div class="selected-file">
+                    <span class="file-name">📄 ${file.name}</span>
+                    <span class="file-size">${fileSize} MB</span>
+                </div>
+            `;
+            fileInfo.style.display = 'block';
+        }
+
+        async function handleFormSubmit(event) {
+            event.preventDefault();
+            
+            const formData = new FormData(uploadForm);
+            const storyName = formData.get('story_name');
+            const userName = formData.get('user_id');
+
+            try {
+                showProcessingSection();
+                
+                // Step 1: Upload story
+                updateProcessingStep('step1', 'active', 'Uploading your story...');
+                const uploadResult = await uploadStory(formData);
+                updateProcessingStep('step1', 'complete', 'Story uploaded!');
+                
+                // Step 2: Configure agent
+                updateProcessingStep('step2', 'active', 'Configuring AI agent...');
+                const configResult = await configureAgent(uploadResult);
+                updateProcessingStep('step2', 'complete', 'Agent configured!');
+                
+                // Step 3: Connect WebSocket
+                updateProcessingStep('step3', 'active', 'Connecting WebSocket...');
+                await initializeWebSocket(configResult.agent_id);
+                updateProcessingStep('step3', 'complete', 'WebSocket connected!');
+                
+                setTimeout(() => {
+                    showConversationSection(storyName, userName);
+                }, 1000);
+                
+            } catch (error) {
+                console.error('Setup error:', error);
+                showError(error.message || 'Failed to set up your story AI. Please try again.');
+            }
+        }
+
+        async function uploadStory(formData) {
+            const response = await fetch('/api/upload-story', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            if (!response.ok || !result.success) {
+                throw new Error(result.detail || 'Failed to upload story');
+            }
+            return result;
+        }
+
+        async function configureAgent(uploadResult) {
+            const configData = new FormData();
+            configData.append('knowledge_base_id', uploadResult.knowledge_base_id);
+            configData.append('knowledge_base_name', uploadResult.knowledge_base_name);
+            configData.append('agent_name', `${uploadResult.original_story_name} Expert`);
+            
+            const response = await fetch('/api/update-agent', {
+                method: 'POST',
+                body: configData
+            });
+            
+            const result = await response.json();
+            if (!response.ok || !result.success) {
+                throw new Error(result.detail || 'Failed to configure AI agent');
+            }
+            return result;
+        }
+
+        async function initializeWebSocket(agentId) {
+            currentAgentId = agentId;
+            
+            return new Promise((resolve, reject) => {
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const wsUrl = `${protocol}//${window.location.host}/api/ws/${agentId}`;
+                
+                websocket = new WebSocket(wsUrl);
+                
+                websocket.onopen = function() {
+                    console.log('✅ WebSocket connected');
+                    updateConnectionStatus('connected', 'Connected to AI');
+                    resolve();
+                };
+                
+                websocket.onmessage = function(event) {
+                    const message = JSON.parse(event.data);
+                    handleWebSocketMessage(message);
+                };
+                
+                websocket.onclose = function() {
+                    console.log('📡 WebSocket disconnected');
+                    updateConnectionStatus('disconnected', 'Disconnected from AI');
+                };
+                
+                websocket.onerror = function(error) {
+                    console.error('❌ WebSocket error:', error);
+                    updateConnectionStatus('error', 'Connection error');
+                    reject(error);
+                };
+                
+                setTimeout(() => {
+                    if (websocket.readyState !== WebSocket.OPEN) {
+                        reject(new Error('WebSocket connection timeout'));
+                    }
+                }, 10000);
+            });
+        }
+
+        function handleWebSocketMessage(message) {
+            console.log('📨 Received message:', message);
+            
+            switch (message.type) {
+                case 'connected':
+                    updateConnectionStatus('connected', message.message);
+                    break;
+                case 'disconnected':
+                    updateConnectionStatus('disconnected', message.message);
+                    break;
+                case 'error':
+                    updateConnectionStatus('error', message.message);
+                    addMessageToDisplay('system', `Error: ${message.message}`);
+                    break;
+                case 'transcript':
+                    addMessageToDisplay('user', message.text);
+                    break;
+                case 'agent_response':
+                    addMessageToDisplay('agent', message.text);
+                    break;
+                case 'audio':
+                    playAudioResponse(message.audio_data);
+                    break;
+            }
+        }
+
+        function updateConnectionStatus(status, message) {
+            connectionStatus.className = `status-indicator status-${status}`;
+            const icon = status === 'connected' ? '🟢' : '🔴';
+            connectionStatus.innerHTML = `<span>${icon}</span><span>${message}</span>`;
+        }
+
+        function addMessageToDisplay(type, text) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}-message`;
+            
+            if (type === 'user') {
+                messageDiv.innerHTML = `<strong>You:</strong> ${text}`;
+            } else if (type === 'agent') {
+                messageDiv.innerHTML = `<strong>AI:</strong> ${text}`;
+            } else {
+                messageDiv.innerHTML = text;
+            }
+            
+            conversationDisplay.appendChild(messageDiv);
+            conversationDisplay.scrollTop = conversationDisplay.scrollHeight;
+        }
+
+        async function startRecording() {
+            if (!websocket || websocket.readyState !== WebSocket.OPEN) {
+                alert('Please wait for the WebSocket connection to be established.');
+                return;
+            }
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: { sampleRate: 16000, channelCount: 1 } 
+                });
+
+                mediaRecorder = new MediaRecorder(stream);
+                const audioChunks = [];
+                
+                mediaRecorder.ondataavailable = function(event) {
+                    if (event.data.size > 0) {
+                        audioChunks.push(event.data);
+                    }
+                };
+
+                mediaRecorder.onstop = function() {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    sendAudioToWebSocket(audioBlob);
+                    stream.getTracks().forEach(track => track.stop());
+                };
+
+                mediaRecorder.start();
+                isRecording = true;
+                
+                micButton.classList.add('recording');
+                micButton.style.display = 'none';
+                stopButton.style.display = 'block';
+                
+                console.log('🎤 Recording started');
+                
+            } catch (error) {
+                console.error('Error starting recording:', error);
+                alert('Could not access microphone. Please check permissions.');
+            }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && isRecording) {
+                mediaRecorder.stop();
+                isRecording = false;
+                
+                micButton.classList.remove('recording');
+                stopButton.style.display = 'none';
+                micButton.style.display = 'block';
+                
+                console.log('⏹️ Recording stopped');
+            }
+        }
+
+        async function sendAudioToWebSocket(audioBlob) {
+            if (!websocket || websocket.readyState !== WebSocket.OPEN) {
+                console.error('WebSocket not connected');
+                return;
+            }
+
+            try {
+                const arrayBuffer = await audioBlob.arrayBuffer();
+                const uint8Array = new Uint8Array(arrayBuffer);
+                const hexString = Array.from(uint8Array)
+                    .map(byte => byte.toString(16).padStart(2, '0'))
+                    .join('');
+
+                const message = {
+                    type: 'audio',
+                    audio_data: hexString
+                };
+
+                websocket.send(JSON.stringify(message));
+                console.log('🎵 Audio sent to WebSocket');
+                
+            } catch (error) {
+                console.error('Error sending audio:', error);
+            }
+        }
+
+        function sendTextMessage() {
+            const text = textInput.value.trim();
+            if (!text) return;
+
+            if (!websocket || websocket.readyState !== WebSocket.OPEN) {
+                alert('Please wait for the WebSocket connection to be established.');
+                return;
+            }
+
+            const message = {
+                type: 'text',
+                text: text
+            };
+
+            websocket.send(JSON.stringify(message));
+            textInput.value = '';
+            addMessageToDisplay('user', text);
+            
+            console.log('💬 Text message sent:', text);
+        }
+
+        function playAudioResponse(hexData) {
+            try {
+                const bytes = new Uint8Array(
+                    hexData.match(/.{1,2}/g).map(byte => parseInt(byte, 16))
+                );
+                
+                const audioBlob = new Blob([bytes], { type: 'audio/wav' });
+                const audioUrl = URL.createObjectURL(audioBlob);
+                const audio = new Audio(audioUrl);
+                
+                audio.play().catch(error => {
+                    console.error('Error playing audio:', error);
+                });
+                
+                audio.onended = () => {
+                    URL.revokeObjectURL(audioUrl);
+                };
+                
+            } catch (error) {
+                console.error('Error processing audio response:', error);
+            }
+        }
+
+        function showProcessingSection() {
+            uploadSection.style.display = 'none';
+            processingSection.style.display = 'block';
+        }
+
+        function updateProcessingStep(stepId, status, message) {
+            const step = document.getElementById(stepId);
+            const statusSpan = step.querySelector('.step-status');
+            
+            switch (status) {
+                case 'active':
+                    statusSpan.innerHTML = '<div class="mini-loader"></div>';
+                    break;
+                case 'complete':
+                    statusSpan.textContent = '✅';
+                    break;
+            }
+            
+            if (message) {
+                document.getElementById('processingStatus').textContent = message;
+            }
+        }
+
+        function showConversationSection(storyName, userName) {
+            processingSection.style.display = 'none';
+            conversationSection.style.display = 'block';
+            
+            document.getElementById('displayStoryName').textContent = storyName;
+            document.getElementById('displayUserName').textContent = userName;
+            
+            conversationDisplay.innerHTML = '<div class="message system-message">Ready to chat! Click the microphone or type a message.</div>';
+        }
+
+        function showError(message) {
+            processingSection.style.display = 'none';
+            errorSection.style.display = 'block';
+            document.getElementById('errorMessage').textContent = message;
+        }
+
+        function resetApplication() {
+            if (websocket) {
+                websocket.close();
+                websocket = null;
+            }
+            
+            if (mediaRecorder && isRecording) {
+                stopRecording();
+            }
+            
+            uploadForm.reset();
+            fileInfo.style.display = 'none';
+            
+            uploadSection.style.display = 'block';
+            processingSection.style.display = 'none';
+            conversationSection.style.display = 'none';
+            errorSection.style.display = 'none';
+            
+            currentAgentId = null;
+        }
+    </script>
+</body>
+</html> 

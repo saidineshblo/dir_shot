@@ -71,6 +71,38 @@ async def home(request: Request):
     """
     return templates.TemplateResponse("index.html", {"request": request})
 
+@app.get("/websocket", response_class=HTMLResponse)
+async def websocket_chat(request: Request):
+    """
+    WebSocket chat interface - uses direct WebSocket connections instead of widget
+    
+    This page provides a WebSocket-based interface for real-time conversations
+    with ElevenLabs AI agents. It offers more control than the widget approach.
+    
+    Args:
+        request: FastAPI request object (needed for template rendering)
+        
+    Returns:
+        HTMLResponse: Rendered HTML page with WebSocket interface
+    """
+    return templates.TemplateResponse("websocket_conversation.html", {"request": request})
+
+@app.get("/sketchbook", response_class=HTMLResponse)
+async def sketchbook(request: Request):
+    """
+    Sketchbook stage - view and export conversation transcripts
+    
+    This page allows users to review their conversation transcripts,
+    export them for analysis, and send them to custom processing endpoints.
+    
+    Args:
+        request: FastAPI request object (needed for template rendering)
+        
+    Returns:
+        HTMLResponse: Rendered HTML page with transcript viewer
+    """
+    return templates.TemplateResponse("sketchbook.html", {"request": request})
+
 @app.get("/health")
 async def health_check():
     """

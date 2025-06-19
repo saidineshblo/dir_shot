@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ElevenLabs Story Agent - Sketchbook</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .sketchbook-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .conversation-list {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+        
+        .conversation-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .conversation-item:hover {
+            background: #f8f9fa;
+            border-color: #667eea;
+        }
+        
+        .conversation-item.active {
+            background: rgba(102, 126, 234, 0.1);
+            border-color: #667eea;
+        }
+        
+        .conversation-info {
+            flex: 1;
+        }
+        
+        .conversation-id {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 5px;
+        }
+        
+        .conversation-date {
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+        
+        .conversation-status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-completed {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .transcript-viewer {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            min-height: 400px;
+        }
+        
+        .transcript-header {
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .transcript-content {
+            max-height: 500px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+        
+        .transcript-message {
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #e9ecef;
+        }
+        
+        .transcript-message.user {
+            background: #e3f2fd;
+            border-left-color: #2196f3;
+        }
+        
+        .transcript-message.agent {
+            background: #f1f8e9;
+            border-left-color: #4caf50;
+        }
+        
+        .message-speaker {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #495057;
+        }
+        
+        .message-text {
+            line-height: 1.6;
+            color: #495057;
+        }
+        
+        .message-timestamp {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-top: 8px;
+        }
+        
+        .loading-state {
+            text-align: center;
+            padding: 50px;
+            color: #6c757d;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 50px;
+            color: #6c757d;
+        }
+        
+        .back-button {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .back-button:hover {
+            background: #5a6268;
+            transform: translateY(-1px);
+        }
+        
+        .refresh-button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-left: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .refresh-button:hover {
+            background: #5a6fd8;
+        }
+        
+        .agent-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .export-button {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .export-button:hover {
+            background: #218838;
+            transform: translateY(-1px);
+        }
+        
+        .latest-button {
+            background: #17a2b8;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+        }
+        
+        .latest-button:hover {
+            background: #138496;
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header Section -->
+        <header class="header sketchbook-header">
+            <h1>📝 Sketchbook Stage</h1>
+            <p>Review and export your conversation transcripts</p>
+        </header>
+
+        <!-- Back Navigation -->
+        <a href="/" class="back-button">← Back to Story Chat</a>
+
+        <!-- Agent Info -->
+        <div class="agent-info" id="agentInfo">
+            <strong>Story:</strong> <span id="currentStoryName">Loading...</span> | 
+            <strong>User:</strong> <span id="currentUserName">Loading...</span> | 
+            <strong>Agent:</strong> <span id="currentAgentId">Loading...</span>
+        </div>
+
+        <!-- Main Content -->
+        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 30px;">
+            <!-- Conversations List -->
+            <div class="conversation-list">
+                <h3>📋 Conversations 
+                    <button id="refreshButton" class="refresh-button">🔄 Refresh</button>
+                </h3>
+                <div id="conversationsList" class="loading-state">
+                    <div class="big-loader"></div>
+                    <p>Loading conversations...</p>
+                </div>
+                <button id="getLatestButton" class="latest-button">🔍 Get Latest Conversation</button>
+            </div>
+
+            <!-- Transcript Viewer -->
+            <div class="transcript-viewer">
+                <div class="transcript-header">
+                    <h3 id="transcriptTitle">📄 Select a conversation to view transcript</h3>
+                </div>
+                <div id="transcriptContent" class="transcript-content">
+                    <div class="empty-state">
+                        <p>🗨️ Select a conversation from the list to view its transcript</p>
+                    </div>
+                </div>
+                <button id="exportButton" class="export-button" style="display: none;">
+                    📥 Export Transcript
+                </button>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>💡 <strong>Sketchbook Stage</strong> - Review your AI conversations and export transcripts for analysis</p>
+        </footer>
+    </div>
+
+    <script>
+        // Application state
+        let currentAgentId = null;
+        let conversations = [];
+        let selectedConversation = null;
+        
+        // DOM elements
+        const conversationsList = document.getElementById('conversationsList');
+        const transcriptContent = document.getElementById('transcriptContent');
+        const transcriptTitle = document.getElementById('transcriptTitle');
+        const refreshButton = document.getElementById('refreshButton');
+        const exportButton = document.getElementById('exportButton');
+        const getLatestButton = document.getElementById('getLatestButton');
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeSketchbook();
+            setupEventListeners();
+        });
+
+        function initializeSketchbook() {
+            // Get agent info from session storage
+            currentAgentId = sessionStorage.getItem('currentAgentId');
+            const storyName = sessionStorage.getItem('storyName');
+            const userName = sessionStorage.getItem('userName');
+            
+            if (!currentAgentId) {
+                alert('No agent found. Please go back and set up your story first.');
+                window.location.href = '/';
+                return;
+            }
+
+            // Display agent info
+            document.getElementById('currentStoryName').textContent = storyName || 'Unknown';
+            document.getElementById('currentUserName').textContent = userName || 'Unknown';
+            document.getElementById('currentAgentId').textContent = currentAgentId;
+
+            // Load conversations
+            loadConversations();
+        }
+
+        function setupEventListeners() {
+            refreshButton.addEventListener('click', loadConversations);
+            exportButton.addEventListener('click', exportTranscript);
+            getLatestButton.addEventListener('click', getLatestConversation);
+        }
+
+        async function loadConversations() {
+            try {
+                conversationsList.innerHTML = `
+                    <div class="loading-state">
+                        <div class="big-loader"></div>
+                        <p>Loading conversations...</p>
+                    </div>
+                `;
+
+                const response = await fetch(`/api/conversations?agent_id=${currentAgentId}`);
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+                    throw new Error(result.detail || 'Failed to load conversations');
+                }
+
+                conversations = result.conversations || [];
+                displayConversations();
+
+            } catch (error) {
+                console.error('Error loading conversations:', error);
+                conversationsList.innerHTML = `
+                    <div class="empty-state">
+                        <p>❌ Error loading conversations: ${error.message}</p>
+                        <button onclick="loadConversations()" class="refresh-button">Try Again</button>
+                    </div>
+                `;
+            }
+        }
+
+        function displayConversations() {
+            if (!conversations || conversations.length === 0) {
+                conversationsList.innerHTML = `
+                    <div class="empty-state">
+                        <p>💭 No conversations found</p>
+                        <p>Start a conversation with your agent to see transcripts here.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const conversationsHtml = conversations.map((conv, index) => {
+                const date = new Date(conv.created_at || Date.now()).toLocaleString();
+                const status = conv.status || 'completed';
+                
+                return `
+                    <div class="conversation-item" onclick="selectConversation('${conv.conversation_id}', ${index})">
+                        <div class="conversation-info">
+                            <div class="conversation-id">Conversation ${index + 1}</div>
+                            <div class="conversation-date">${date}</div>
+                        </div>
+                        <div class="conversation-status status-${status}">${status}</div>
+                    </div>
+                `;
+            }).join('');
+
+            conversationsList.innerHTML = `<h3 style="margin-bottom: 20px;">📋 Conversations (${conversations.length})</h3>` + conversationsHtml;
+
+            // Auto-select the latest conversation
+            if (conversations.length > 0) {
+                selectConversation(conversations[0].conversation_id, 0);
+            }
+        }
+
+        async function selectConversation(conversationId, index) {
+            try {
+                // Update UI to show selection
+                document.querySelectorAll('.conversation-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                document.querySelectorAll('.conversation-item')[index]?.classList.add('active');
+
+                // Show loading state
+                transcriptContent.innerHTML = `
+                    <div class="loading-state">
+                        <div class="big-loader"></div>
+                        <p>Loading transcript...</p>
+                    </div>
+                `;
+                transcriptTitle.textContent = `📄 Loading Conversation ${index + 1}...`;
+
+                // Fetch transcript
+                const response = await fetch(`/api/conversations/${conversationId}`);
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+                    throw new Error(result.detail || 'Failed to load transcript');
+                }
+
+                selectedConversation = result.transcript;
+                displayTranscript(selectedConversation, index + 1);
+
+            } catch (error) {
+                console.error('Error loading transcript:', error);
+                transcriptContent.innerHTML = `
+                    <div class="empty-state">
+                        <p>❌ Error loading transcript: ${error.message}</p>
+                    </div>
+                `;
+                transcriptTitle.textContent = '📄 Error Loading Transcript';
+            }
+        }
+
+        function displayTranscript(transcript, conversationNumber) {
+            if (!transcript || !transcript.messages || transcript.messages.length === 0) {
+                transcriptContent.innerHTML = `
+                    <div class="empty-state">
+                        <p>💭 No messages in this conversation</p>
+                    </div>
+                `;
+                transcriptTitle.textContent = `📄 Conversation ${conversationNumber} - Empty`;
+                exportButton.style.display = 'none';
+                return;
+            }
+
+            transcriptTitle.textContent = `📄 Conversation ${conversationNumber} - ${transcript.messages.length} messages`;
+            
+            const messagesHtml = transcript.messages.map(message => {
+                const speaker = message.role === 'user' ? 'user' : 'agent';
+                const speakerName = message.role === 'user' ? 'You' : 'AI Assistant';
+                const timestamp = new Date(message.timestamp || Date.now()).toLocaleString();
+                
+                return `
+                    <div class="transcript-message ${speaker}">
+                        <div class="message-speaker">${speakerName}</div>
+                        <div class="message-text">${message.content || message.text || 'No content'}</div>
+                        <div class="message-timestamp">${timestamp}</div>
+                    </div>
+                `;
+            }).join('');
+
+            transcriptContent.innerHTML = messagesHtml;
+            exportButton.style.display = 'block';
+        }
+
+        function exportTranscript() {
+            if (!selectedConversation) {
+                alert('No conversation selected to export.');
+                return;
+            }
+
+            try {
+                // Create transcript text
+                let transcriptText = `ElevenLabs Story Agent - Conversation Transcript\n`;
+                transcriptText += `Generated: ${new Date().toLocaleString()}\n`;
+                transcriptText += `Agent ID: ${currentAgentId}\n`;
+                transcriptText += `Story: ${document.getElementById('currentStoryName').textContent}\n`;
+                transcriptText += `User: ${document.getElementById('currentUserName').textContent}\n`;
+                transcriptText += `\n${'='.repeat(50)}\n\n`;
+
+                selectedConversation.messages.forEach((message, index) => {
+                    const speaker = message.role === 'user' ? 'USER' : 'AI ASSISTANT';
+                    const timestamp = new Date(message.timestamp || Date.now()).toLocaleString();
+                    
+                    transcriptText += `[${index + 1}] ${speaker} (${timestamp})\n`;
+                    transcriptText += `${message.content || message.text || 'No content'}\n\n`;
+                });
+
+                // Create and download file
+                const blob = new Blob([transcriptText], { type: 'text/plain' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `conversation-transcript-${Date.now()}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+
+                alert('Transcript exported successfully!');
+
+            } catch (error) {
+                console.error('Error exporting transcript:', error);
+                alert('Error exporting transcript. Please try again.');
+            }
+        }
+
+        // Send transcript to API endpoint
+        async function sendTranscriptToAPI() {
+            if (!selectedConversation) {
+                alert('No conversation selected to send.');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/transcript', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        agent_id: currentAgentId,
+                        conversation_id: selectedConversation.conversation_id,
+                        transcript: selectedConversation
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    alert('Transcript sent successfully!');
+                } else {
+                    throw new Error(result.detail || 'Failed to send transcript');
+                }
+
+            } catch (error) {
+                console.error('Error sending transcript:', error);
+                alert('Error sending transcript: ' + error.message);
+            }
+        }
+
+        async function getLatestConversation() {
+            try {
+                // Show loading state
+                transcriptContent.innerHTML = `
+                    <div class="loading-state">
+                        <div class="big-loader"></div>
+                        <p>Loading latest conversation...</p>
+                    </div>
+                `;
+                transcriptTitle.textContent = `📄 Loading Latest Conversation...`;
+                
+                // Fetch latest conversation
+                const response = await fetch(`/api/latest-conversation?agent_id=${currentAgentId}`);
+                const result = await response.json();
+                
+                if (!response.ok || !result.success) {
+                    throw new Error(result.detail || 'Failed to load latest conversation');
+                }
+                
+                if (result.message && result.message.includes("No conversations found")) {
+                    transcriptContent.innerHTML = `
+                        <div class="empty-state">
+                            <p>💭 No conversations found</p>
+                            <p>Start a conversation with your agent to see transcripts here.</p>
+                        </div>
+                    `;
+                    transcriptTitle.textContent = `📄 No Conversations Available`;
+                    return;
+                }
+                
+                // Update UI to show selection
+                selectedConversation = result.transcript;
+                
+                // Refresh the conversation list to ensure it's up to date
+                await loadConversations();
+                
+                // Find the index of the latest conversation in our list
+                const latestConvId = result.conversation_metadata.conversation_id;
+                const index = conversations.findIndex(c => c.conversation_id === latestConvId);
+                
+                if (index >= 0) {
+                    // Update UI to show selection
+                    document.querySelectorAll('.conversation-item').forEach(item => {
+                        item.classList.remove('active');
+                    });
+                    document.querySelectorAll('.conversation-item')[index]?.classList.add('active');
+                }
+                
+                // Display the transcript
+                displayTranscript(selectedConversation, 'Latest');
+                
+            } catch (error) {
+                console.error('Error loading latest conversation:', error);
+                transcriptContent.innerHTML = `
+                    <div class="empty-state">
+                        <p>❌ Error loading latest conversation: ${error.message}</p>
+                    </div>
+                `;
+                transcriptTitle.textContent = '📄 Error Loading Latest Conversation';
+            }
+        }
+    </script>
+</body>
+</html> 
