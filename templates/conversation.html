@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ElevenLabs Story Agent - Conversation</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header Section -->
+        <header class="header">
+            <h1>💬 Talk to Your Story Agent</h1>
+            <p>Have conversations with your AI agent about your uploaded story</p>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="navigation">
+            <a href="/" class="nav-link">Upload Story</a>
+            <a href="/agent-config" class="nav-link">Configure Agent</a>
+            <a href="/conversation" class="nav-link active">Start Conversation</a>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Conversation Widget Section -->
+            <div class="conversation-section">
+                <h2>🎙️ Voice Conversation</h2>
+                <p class="section-description">
+                    Click the microphone button below to start a voice conversation with your AI agent. 
+                    The agent has been trained on your story content and can discuss it with you.
+                </p>
+
+                <!-- ElevenLabs Widget Container -->
+                <div class="widget-container">
+                    <div id="elevenlabs-widget" class="elevenlabs-widget">
+                        <!-- The ElevenLabs widget will be inserted here -->
+                        <elevenlabs-convai agent-id=""></elevenlabs-convai>
+                    </div>
+                </div>
+
+                <!-- Widget Status -->
+                <div id="widgetStatus" class="widget-status">
+                    <div class="status-item">
+                        <strong>🤖 Agent Status:</strong>
+                        <span id="agentStatus" class="status status-loading">Loading...</span>
+                    </div>
+                    <div class="status-item">
+                        <strong>📱 Widget Status:</strong>
+                        <span id="widgetLoadStatus" class="status status-loading">Loading...</span>
+                    </div>
+                </div>
+
+                <!-- Instructions -->
+                <div class="instructions">
+                    <h3>📋 How to Use</h3>
+                    <ol>
+                        <li>Ensure your microphone is enabled in your browser</li>
+                        <li>Click the microphone button to start speaking</li>
+                        <li>Ask questions about your story or have a natural conversation</li>
+                        <li>The agent will respond with voice and you can see transcripts below</li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- Conversation History Section -->
+            <div class="history-section">
+                <h2>📋 Conversation History</h2>
+                <p class="section-description">
+                    View and manage your conversation history. Transcripts are automatically saved.
+                </p>
+
+                <div class="history-controls">
+                    <button id="refreshHistory" class="control-button">
+                        🔄 Refresh History
+                    </button>
+                    <button id="clearHistory" class="control-button secondary">
+                        🗑️ Clear Display
+                    </button>
+                </div>
+
+                <div id="conversationHistory" class="conversation-history">
+                    <div class="loading-conversations">
+                        <div class="loader"></div>
+                        <p>Loading conversation history...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Troubleshooting Section -->
+            <div class="troubleshooting-section">
+                <h3>🔧 Troubleshooting</h3>
+                <div class="troubleshooting-content">
+                    <div class="troubleshooting-item">
+                        <h4>🎤 Microphone Not Working?</h4>
+                        <ul>
+                            <li>Check browser permissions for microphone access</li>
+                            <li>Ensure your microphone is not muted</li>
+                            <li>Try refreshing the page</li>
+                        </ul>
+                    </div>
+                    <div class="troubleshooting-item">
+                        <h4>🤖 Agent Not Responding?</h4>
+                        <ul>
+                            <li>Verify your agent is configured with a knowledge base</li>
+                            <li>Check that your ElevenLabs API key is valid</li>
+                            <li>Ensure the agent ID is correct</li>
+                        </ul>
+                    </div>
+                    <div class="troubleshooting-item">
+                        <h4>📝 No Conversation History?</h4>
+                        <ul>
+                            <li>Conversations may take a moment to appear</li>
+                            <li>Check if you're using the correct agent ID</li>
+                            <li>Refresh the history manually</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>💡 <strong>Learning Tip:</strong> This demonstrates real-time voice AI integration and conversation management with ElevenLabs.</p>
+        </footer>
+    </div>
+
+    <!-- ElevenLabs Widget Script -->
+    <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
+
+    <script>
+        // Configuration and state management
+        let currentAgentId = null;
+        let conversationRefreshInterval = null;
+
+        // Load page on DOM ready
+        document.addEventListener('DOMContentLoaded', initializePage);
+
+        async function initializePage() {
+            await loadAgentInfo();
+            await loadConversationHistory();
+            setupEventListeners();
+            startAutoRefresh();
+        }
+
+        async function loadAgentInfo() {
+            try {
+                const response = await fetch('/api/agent-info');
+                const result = await response.json();
+                
+                if (result.success && result.agent_id) {
+                    currentAgentId = result.agent_id;
+                    updateAgentStatus('✅ Ready', 'status-good');
+                    updateWidgetWithAgentId(result.agent_id);
+                } else {
+                    updateAgentStatus('❌ Not configured', 'status-error');
+                    showAgentError();
+                }
+            } catch (error) {
+                console.error('Error loading agent info:', error);
+                updateAgentStatus('❌ Error loading', 'status-error');
+                showAgentError();
+            }
+        }
+
+        function updateAgentStatus(text, className) {
+            const statusElement = document.getElementById('agentStatus');
+            statusElement.textContent = text;
+            statusElement.className = `status ${className}`;
+        }
+
+        function updateWidgetWithAgentId(agentId) {
+            const widget = document.querySelector('elevenlabs-convai');
+            if (widget) {
+                widget.setAttribute('agent-id', agentId);
+                updateWidgetStatus('✅ Widget loaded', 'status-good');
+            } else {
+                // Wait for widget to load and try again
+                setTimeout(() => updateWidgetWithAgentId(agentId), 1000);
+            }
+        }
+
+        function updateWidgetStatus(text, className) {
+            const statusElement = document.getElementById('widgetLoadStatus');
+            statusElement.textContent = text;
+            statusElement.className = `status ${className}`;
+        }
+
+        function showAgentError() {
+            const widgetContainer = document.querySelector('.widget-container');
+            widgetContainer.innerHTML = `
+                <div class="widget-error">
+                    <h3>⚠️ Agent Not Configured</h3>
+                    <p>Your agent needs to be configured before you can start conversations.</p>
+                    <div class="error-actions">
+                        <a href="/" class="button">📄 Upload Story</a>
+                        <a href="/agent-config" class="button">⚙️ Configure Agent</a>
+                    </div>
+                </div>
+            `;
+            updateWidgetStatus('❌ No agent configured', 'status-error');
+        }
+
+        async function loadConversationHistory() {
+            const historyContainer = document.getElementById('conversationHistory');
+            
+            try {
+                // Show loading state
+                historyContainer.innerHTML = `
+                    <div class="loading-conversations">
+                        <div class="loader"></div>
+                        <p>Loading conversation history...</p>
+                    </div>
+                `;
+
+                const response = await fetch('/api/conversations');
+                const result = await response.json();
+                
+                if (result.success) {
+                    displayConversationHistory(result.conversations);
+                } else {
+                    showHistoryError('Failed to load conversation history');
+                }
+            } catch (error) {
+                console.error('Error loading conversation history:', error);
+                showHistoryError('Network error while loading conversations');
+            }
+        }
+
+        function displayConversationHistory(conversations) {
+            const historyContainer = document.getElementById('conversationHistory');
+            
+            if (!conversations || conversations.length === 0) {
+                historyContainer.innerHTML = `
+                    <div class="no-conversations">
+                        <h3>📭 No Conversations Yet</h3>
+                        <p>Start your first conversation using the voice widget above!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const conversationsHtml = conversations.map(conversation => `
+                <div class="conversation-item" data-conversation-id="${conversation.id}">
+                    <div class="conversation-header">
+                        <h4>🗨️ Conversation ${conversation.id}</h4>
+                        <span class="conversation-date">${formatDate(conversation.created_at)}</span>
+                    </div>
+                    <div class="conversation-preview">
+                        <p>${conversation.preview || 'Click to view full transcript'}</p>
+                    </div>
+                    <div class="conversation-actions">
+                        <button onclick="viewTranscript('${conversation.id}')" class="action-button">
+                            📄 View Transcript
+                        </button>
+                        <button onclick="downloadTranscript('${conversation.id}')" class="action-button secondary">
+                            💾 Download
+                        </button>
+                    </div>
+                    <div id="transcript-${conversation.id}" class="transcript-content" style="display: none;"></div>
+                </div>
+            `).join('');
+
+            historyContainer.innerHTML = conversationsHtml;
+        }
+
+        function showHistoryError(message) {
+            const historyContainer = document.getElementById('conversationHistory');
+            historyContainer.innerHTML = `
+                <div class="history-error">
+                    <h3>❌ Error Loading History</h3>
+                    <p>${message}</p>
+                    <button onclick="loadConversationHistory()" class="retry-button">
+                        🔄 Try Again
+                    </button>
+                </div>
+            `;
+        }
+
+        async function viewTranscript(conversationId) {
+            const transcriptContainer = document.getElementById(`transcript-${conversationId}`);
+            
+            try {
+                // Show loading
+                transcriptContainer.innerHTML = '<div class="loading">Loading transcript...</div>';
+                transcriptContainer.style.display = 'block';
+
+                const response = await fetch(`/api/conversations/${conversationId}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    displayTranscript(transcriptContainer, result.transcript);
+                } else {
+                    transcriptContainer.innerHTML = '<div class="error">Failed to load transcript</div>';
+                }
+            } catch (error) {
+                console.error('Error loading transcript:', error);
+                transcriptContainer.innerHTML = '<div class="error">Network error loading transcript</div>';
+            }
+        }
+
+        function displayTranscript(container, transcript) {
+            // Format and display the transcript
+            // This is a simplified version - you may need to adjust based on ElevenLabs response format
+            const transcriptHtml = `
+                <div class="transcript">
+                    <h5>📝 Full Transcript</h5>
+                    <div class="transcript-content">
+                        ${JSON.stringify(transcript, null, 2)}
+                    </div>
+                </div>
+            `;
+            container.innerHTML = transcriptHtml;
+        }
+
+        function downloadTranscript(conversationId) {
+            // Create a download link for the transcript
+            const link = document.createElement('a');
+            link.href = `/api/conversations/${conversationId}`;
+            link.download = `conversation_${conversationId}_transcript.json`;
+            link.click();
+        }
+
+        function setupEventListeners() {
+            document.getElementById('refreshHistory').addEventListener('click', loadConversationHistory);
+            document.getElementById('clearHistory').addEventListener('click', clearHistoryDisplay);
+        }
+
+        function clearHistoryDisplay() {
+            const historyContainer = document.getElementById('conversationHistory');
+            historyContainer.innerHTML = `
+                <div class="cleared-message">
+                    <p>Display cleared. Click "Refresh History" to reload conversations.</p>
+                </div>
+            `;
+        }
+
+        function startAutoRefresh() {
+            // Auto-refresh conversation history every 30 seconds
+            conversationRefreshInterval = setInterval(loadConversationHistory, 30000);
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return 'Unknown date';
+            const date = new Date(dateString);
+            return date.toLocaleString();
+        }
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (conversationRefreshInterval) {
+                clearInterval(conversationRefreshInterval);
+            }
+        });
+
+        // Widget load detection
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'elevenlabs-widget-loaded') {
+                updateWidgetStatus('✅ Widget ready', 'status-good');
+            }
+        });
+    </script>
+</body>
+</html> 

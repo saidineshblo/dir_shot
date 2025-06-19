@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ElevenLabs Story Agent - Talk to Your Story</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header Section -->
+        <header class="header">
+            <h1>📚 Talk to Your Story</h1>
+            <p>Upload a PDF story and start an AI conversation instantly</p>
+        </header>
+
+        <!-- Upload Section (Initial View) -->
+        <div id="uploadSection" class="upload-section">
+            <h2>🚀 Get Started</h2>
+            <p class="section-description">
+                Upload your PDF story and our AI will instantly become an expert on it. 
+                You can then have natural voice conversations about your story content.
+            </p>
+
+            <form id="uploadForm" class="upload-form" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="userId" class="form-label">
+                        👤 Your Name
+                        <span class="required">*</span>
+                    </label>
+                    <input 
+                        type="text" 
+                        id="userId" 
+                        name="user_id" 
+                        class="form-input" 
+                        required 
+                        placeholder="Enter your name (e.g., John)"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="storyName" class="form-label">
+                        📖 Story Title
+                        <span class="required">*</span>
+                    </label>
+                    <input 
+                        type="text" 
+                        id="storyName" 
+                        name="story_name" 
+                        class="form-input" 
+                        required 
+                        placeholder="What's your story called?"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="pdfFile" class="form-label">
+                        📄 Upload Your Story (PDF)
+                        <span class="required">*</span>
+                    </label>
+                    <div class="file-upload-area" id="fileUploadArea">
+                        <div class="file-upload-content">
+                            <div class="file-upload-icon">📁</div>
+                            <p class="file-upload-text">
+                                Click to select your PDF story or drag and drop here
+                            </p>
+                            <p class="file-upload-details">
+                                Maximum file size: 10MB | PDF files only
+                            </p>
+                        </div>
+                        <input 
+                            type="file" 
+                            id="pdfFile" 
+                            name="file" 
+                            class="file-input" 
+                            accept=".pdf,application/pdf" 
+                            required
+                        >
+                    </div>
+                    <div id="fileInfo" class="file-info" style="display: none;"></div>
+                </div>
+
+                <button type="submit" class="submit-button" id="submitButton">
+                    <span class="button-text">🚀 Upload & Start Talking</span>
+                    <div class="button-loader" style="display: none;"></div>
+                </button>
+            </form>
+        </div>
+
+        <!-- Processing Section (Shows during upload/config) -->
+        <div id="processingSection" class="processing-section" style="display: none;">
+            <div class="processing-content">
+                <div class="big-loader"></div>
+                <h2>🔧 Setting up your AI story expert...</h2>
+                <p id="processingStatus">Uploading your story...</p>
+                <div class="processing-steps">
+                    <div class="step" id="step1">
+                        <span class="step-icon">📄</span>
+                        <span class="step-text">Uploading story to AI</span>
+                        <span class="step-status">⏳</span>
+                    </div>
+                    <div class="step" id="step2">
+                        <span class="step-icon">🧠</span>
+                        <span class="step-text">Configuring AI agent</span>
+                        <span class="step-status">⏳</span>
+                    </div>
+                    <div class="step" id="step3">
+                        <span class="step-icon">🎙️</span>
+                        <span class="step-text">Preparing voice chat</span>
+                        <span class="step-status">⏳</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Conversation Section (Shows after successful setup) -->
+        <div id="conversationSection" class="conversation-section" style="display: none;">
+            <div class="conversation-header">
+                <h2>💬 Talk to Your Story AI</h2>
+                <p class="story-info">
+                    <strong>Story:</strong> <span id="displayStoryName"></span> | 
+                    <strong>User:</strong> <span id="displayUserName"></span>
+                </p>
+                <p class="conversation-description">
+                    Your AI is now an expert on your story! Click the microphone to start a voice conversation.
+                    Ask questions, discuss characters, explore plot points, or just chat about your story.
+                </p>
+            </div>
+
+            <!-- ElevenLabs Widget Container -->
+            <div class="widget-container">
+                <div id="elevenlabs-widget" class="elevenlabs-widget">
+                    <elevenlabs-convai agent-id=""></elevenlabs-convai>
+                </div>
+            </div>
+
+            <!-- Quick Instructions -->
+            <div class="quick-instructions">
+                <h3>💡 Quick Tips</h3>
+                <div class="tips-grid">
+                    <div class="tip">
+                        <span class="tip-icon">🎤</span>
+                        <span class="tip-text">Click microphone to start talking</span>
+                    </div>
+                    <div class="tip">
+                        <span class="tip-icon">❓</span>
+                        <span class="tip-text">Ask questions about your story</span>
+                    </div>
+                    <div class="tip">
+                        <span class="tip-icon">🗨️</span>
+                        <span class="tip-text">Discuss characters and plot</span>
+                    </div>
+                    <div class="tip">
+                        <span class="tip-icon">🔄</span>
+                        <span class="tip-text">Upload new story anytime</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reset Button -->
+            <div class="reset-section">
+                <button id="resetButton" class="reset-button">
+                    📄 Upload Different Story
+                </button>
+            </div>
+        </div>
+
+        <!-- Error Section -->
+        <div id="errorSection" class="error-section" style="display: none;">
+            <h3>❌ Something went wrong</h3>
+            <div id="errorMessage" class="error-content"></div>
+            <button id="retryButton" class="retry-button">
+                🔄 Try Again
+            </button>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>💡 Powered by ElevenLabs AI | Upload any PDF story and start chatting instantly!</p>
+        </footer>
+    </div>
+
+    <!-- ElevenLabs Widget Script -->
+    <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
+
+    <script>
+        // Application state
+        let currentAgentId = null;
+        let currentKnowledgeBaseId = null;
+
+        // DOM elements
+        const uploadSection = document.getElementById('uploadSection');
+        const processingSection = document.getElementById('processingSection');
+        const conversationSection = document.getElementById('conversationSection');
+        const errorSection = document.getElementById('errorSection');
+        const uploadForm = document.getElementById('uploadForm');
+        const submitButton = document.getElementById('submitButton');
+        const resetButton = document.getElementById('resetButton');
+        const retryButton = document.getElementById('retryButton');
+
+        // File upload handling
+        const fileInput = document.getElementById('pdfFile');
+        const fileUploadArea = document.getElementById('fileUploadArea');
+        const fileInfo = document.getElementById('fileInfo');
+
+        // Initialize event listeners
+        document.addEventListener('DOMContentLoaded', initializeApp);
+
+        function initializeApp() {
+            setupFileUpload();
+            setupFormSubmission();
+            setupButtons();
+        }
+
+        function setupFileUpload() {
+            fileInput.addEventListener('change', handleFileSelection);
+            fileUploadArea.addEventListener('click', () => fileInput.click());
+            fileUploadArea.addEventListener('dragover', handleDragOver);
+            fileUploadArea.addEventListener('drop', handleFileDrop);
+        }
+
+        function handleFileSelection(event) {
+            const file = event.target.files[0];
+            if (file) {
+                displayFileInfo(file);
+            }
+        }
+
+        function handleDragOver(event) {
+            event.preventDefault();
+            fileUploadArea.classList.add('drag-over');
+        }
+
+        function handleFileDrop(event) {
+            event.preventDefault();
+            fileUploadArea.classList.remove('drag-over');
+            
+            const files = event.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                displayFileInfo(files[0]);
+            }
+        }
+
+        function displayFileInfo(file) {
+            const fileSize = (file.size / 1024 / 1024).toFixed(2);
+            fileInfo.innerHTML = `
+                <div class="selected-file">
+                    <span class="file-name">📄 ${file.name}</span>
+                    <span class="file-size">${fileSize} MB</span>
+                </div>
+            `;
+            fileInfo.style.display = 'block';
+            fileUploadArea.classList.add('file-selected');
+        }
+
+        function setupFormSubmission() {
+            uploadForm.addEventListener('submit', handleFormSubmit);
+        }
+
+        async function handleFormSubmit(event) {
+            event.preventDefault();
+            
+            const formData = new FormData(uploadForm);
+            const storyName = formData.get('story_name');
+            const userName = formData.get('user_id');
+
+            try {
+                // Show processing section
+                showProcessingSection();
+                
+                // Step 1: Upload story
+                updateProcessingStep('step1', 'uploading', 'Uploading your story to AI...');
+                const uploadResult = await uploadStory(formData);
+                updateProcessingStep('step1', 'complete', 'Story uploaded successfully!');
+                
+                // Step 2: Configure agent
+                updateProcessingStep('step2', 'uploading', 'Configuring AI agent with your story...');
+                const configResult = await configureAgent(uploadResult);
+                updateProcessingStep('step2', 'complete', 'AI agent configured!');
+                
+                // Step 3: Prepare widget
+                updateProcessingStep('step3', 'uploading', 'Preparing voice conversation...');
+                await setupConversationWidget(configResult.agent_id);
+                updateProcessingStep('step3', 'complete', 'Ready to chat!');
+                
+                // Show conversation section
+                setTimeout(() => {
+                    showConversationSection(storyName, userName);
+                }, 1000);
+                
+            } catch (error) {
+                console.error('Setup error:', error);
+                showError(error.message || 'Failed to set up your story AI. Please try again.');
+            }
+        }
+
+        async function uploadStory(formData) {
+            const response = await fetch('/api/upload-story', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            
+            if (!response.ok || !result.success) {
+                throw new Error(result.detail || 'Failed to upload story');
+            }
+            
+            return result;
+        }
+
+        async function configureAgent(uploadResult) {
+            const configData = new FormData();
+            configData.append('knowledge_base_id', uploadResult.knowledge_base_id);
+            configData.append('knowledge_base_name', uploadResult.knowledge_base_name);
+            configData.append('agent_name', `${uploadResult.original_story_name} Expert`);
+            
+            const response = await fetch('/api/update-agent', {
+                method: 'POST',
+                body: configData
+            });
+            
+            const result = await response.json();
+            
+            if (!response.ok || !result.success) {
+                throw new Error(result.detail || 'Failed to configure AI agent');
+            }
+            
+            return result;
+        }
+
+        async function setupConversationWidget(agentId) {
+            currentAgentId = agentId;
+            
+            // Wait a moment for the agent to be ready
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Configure the widget
+            const widget = document.querySelector('elevenlabs-convai');
+            if (widget) {
+                widget.setAttribute('agent-id', agentId);
+            }
+        }
+
+        function showProcessingSection() {
+            uploadSection.style.display = 'none';
+            errorSection.style.display = 'none';
+            conversationSection.style.display = 'none';
+            processingSection.style.display = 'block';
+            
+            // Reset all steps
+            ['step1', 'step2', 'step3'].forEach(stepId => {
+                updateProcessingStep(stepId, 'waiting', '');
+            });
+        }
+
+        function updateProcessingStep(stepId, status, message) {
+            const step = document.getElementById(stepId);
+            const statusSpan = step.querySelector('.step-status');
+            
+            // Update status icon
+            switch (status) {
+                case 'waiting':
+                    statusSpan.textContent = '⏳';
+                    break;
+                case 'uploading':
+                    statusSpan.innerHTML = '<div class="mini-loader"></div>';
+                    break;
+                case 'complete':
+                    statusSpan.textContent = '✅';
+                    break;
+                case 'error':
+                    statusSpan.textContent = '❌';
+                    break;
+            }
+            
+            // Update processing status message
+            if (message) {
+                document.getElementById('processingStatus').textContent = message;
+            }
+        }
+
+        function showConversationSection(storyName, userName) {
+            processingSection.style.display = 'none';
+            errorSection.style.display = 'none';
+            conversationSection.style.display = 'block';
+            
+            // Update display info
+            document.getElementById('displayStoryName').textContent = storyName;
+            document.getElementById('displayUserName').textContent = userName;
+            
+            // Try to update widget again in case it wasn't ready
+            setTimeout(() => {
+                const widget = document.querySelector('elevenlabs-convai');
+                if (widget && currentAgentId) {
+                    widget.setAttribute('agent-id', currentAgentId);
+                }
+            }, 500);
+        }
+
+        function showError(message) {
+            processingSection.style.display = 'none';
+            conversationSection.style.display = 'none';
+            errorSection.style.display = 'block';
+            
+            document.getElementById('errorMessage').textContent = message;
+        }
+
+        function setupButtons() {
+            resetButton.addEventListener('click', resetApplication);
+            retryButton.addEventListener('click', resetApplication);
+        }
+
+        function resetApplication() {
+            // Reset form
+            uploadForm.reset();
+            fileInfo.style.display = 'none';
+            fileUploadArea.classList.remove('file-selected');
+            
+            // Reset state
+            currentAgentId = null;
+            currentKnowledgeBaseId = null;
+            
+            // Show upload section
+            uploadSection.style.display = 'block';
+            processingSection.style.display = 'none';
+            conversationSection.style.display = 'none';
+            errorSection.style.display = 'none';
+        }
+
+        // Handle widget loading
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'elevenlabs-widget-loaded') {
+                console.log('ElevenLabs widget loaded successfully');
+            }
+        });
+    </script>
+</body>
+</html> 

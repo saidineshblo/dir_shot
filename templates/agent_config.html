@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ElevenLabs Story Agent - Configure Agent</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header Section -->
+        <header class="header">
+            <h1>🤖 Configure Your AI Agent</h1>
+            <p>Connect your uploaded story to an ElevenLabs agent</p>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="navigation">
+            <a href="/" class="nav-link">Upload Story</a>
+            <a href="/agent-config" class="nav-link active">Configure Agent</a>
+            <a href="/conversation" class="nav-link">Start Conversation</a>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Agent Information Section -->
+            <div class="info-section">
+                <h2>ℹ️ Agent Information</h2>
+                <div id="agentInfo" class="agent-info">
+                    <div class="loading">Loading agent information...</div>
+                </div>
+            </div>
+
+            <!-- Configuration Form -->
+            <div class="config-section">
+                <h2>⚙️ Update Agent Configuration</h2>
+                <p class="section-description">
+                    Use the Knowledge Base ID from your uploaded story to configure your agent. 
+                    This enables the agent to have conversations based on your story content.
+                </p>
+
+                <form id="configForm" class="config-form">
+                    <div class="form-group">
+                        <label for="knowledgeBaseId" class="form-label">
+                            🔑 Knowledge Base ID
+                            <span class="required">*</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            id="knowledgeBaseId" 
+                            name="knowledge_base_id" 
+                            class="form-input" 
+                            required 
+                            placeholder="Enter the Knowledge Base ID from upload"
+                        >
+                        <small class="form-help">Copy this from the upload results page</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="knowledgeBaseName" class="form-label">
+                            📝 Knowledge Base Name
+                            <span class="required">*</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            id="knowledgeBaseName" 
+                            name="knowledge_base_name" 
+                            class="form-input" 
+                            required 
+                            placeholder="Enter the Knowledge Base Name"
+                        >
+                        <small class="form-help">The full name from the upload results (user_story_timestamp format)</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="agentId" class="form-label">
+                            🤖 Agent ID
+                            <span class="optional">(Optional)</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            id="agentId" 
+                            name="agent_id" 
+                            class="form-input" 
+                            placeholder="Leave empty to use default agent"
+                        >
+                        <small class="form-help">Use a specific agent ID or leave empty for the default configured agent</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="agentName" class="form-label">
+                            🏷️ Agent Name
+                            <span class="optional">(Optional)</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            id="agentName" 
+                            name="agent_name" 
+                            class="form-input" 
+                            placeholder="Give your agent a new name"
+                        >
+                        <small class="form-help">Optionally rename your agent to reflect the story content</small>
+                    </div>
+
+                    <button type="submit" class="submit-button" id="configButton">
+                        <span class="button-text">🔧 Configure Agent</span>
+                        <div class="button-loader" style="display: none;"></div>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Configuration Results -->
+            <div id="configResults" class="results-section" style="display: none;">
+                <h3>✅ Agent Configured Successfully!</h3>
+                <div id="configResultsContent" class="results-content"></div>
+                <div class="next-steps">
+                    <h4>🎯 Next Steps:</h4>
+                    <ol>
+                        <li>Go to <a href="/conversation">Start Conversation</a> to interact with your agent</li>
+                        <li>Your agent can now reference and discuss your story content</li>
+                        <li>View conversation transcripts to see how your agent performs</li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- Configuration Error -->
+            <div id="configError" class="error-section" style="display: none;">
+                <h3>❌ Configuration Failed</h3>
+                <div id="configErrorMessage" class="error-content"></div>
+            </div>
+
+            <!-- Help Section -->
+            <div class="help-section">
+                <h3>❓ Need Help?</h3>
+                <div class="help-content">
+                    <div class="help-item">
+                        <h4>📋 Where do I find the Knowledge Base ID?</h4>
+                        <p>After uploading a story, you'll receive a Knowledge Base ID. Copy it from the upload results page.</p>
+                    </div>
+                    <div class="help-item">
+                        <h4>🤖 What happens when I configure the agent?</h4>
+                        <p>The agent will be updated to use your story as its knowledge base, enabling it to answer questions about the story content.</p>
+                    </div>
+                    <div class="help-item">
+                        <h4>🔄 Can I change the configuration later?</h4>
+                        <p>Yes! You can upload new stories and reconfigure the agent with different knowledge bases.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>💡 <strong>Learning Tip:</strong> This demonstrates API configuration and real-time updates with ElevenLabs conversational AI.</p>
+        </footer>
+    </div>
+
+    <script>
+        // Load agent information on page load
+        document.addEventListener('DOMContentLoaded', loadAgentInfo);
+
+        async function loadAgentInfo() {
+            try {
+                const response = await fetch('/api/agent-info');
+                const result = await response.json();
+                
+                if (result.success) {
+                    displayAgentInfo(result);
+                } else {
+                    displayAgentError('Failed to load agent information');
+                }
+            } catch (error) {
+                console.error('Error loading agent info:', error);
+                displayAgentError('Network error while loading agent information');
+            }
+        }
+
+        function displayAgentInfo(info) {
+            const agentInfoDiv = document.getElementById('agentInfo');
+            agentInfoDiv.innerHTML = `
+                <div class="info-grid">
+                    <div class="info-item">
+                        <strong>🤖 Default Agent ID:</strong>
+                        <span>${info.agent_id || 'Not configured'}</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>🔑 API Status:</strong>
+                        <span class="status ${info.api_configured ? 'status-good' : 'status-error'}">
+                            ${info.api_configured ? '✅ Configured' : '❌ Not configured'}
+                        </span>
+                    </div>
+                    <div class="info-item">
+                        <strong>🌐 API Base URL:</strong>
+                        <span>${info.base_url}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function displayAgentError(message) {
+            const agentInfoDiv = document.getElementById('agentInfo');
+            agentInfoDiv.innerHTML = `
+                <div class="error-message">
+                    ❌ ${message}
+                </div>
+            `;
+        }
+
+        // Handle configuration form submission
+        const configForm = document.getElementById('configForm');
+        const configButton = document.getElementById('configButton');
+        const buttonText = configButton.querySelector('.button-text');
+        const buttonLoader = configButton.querySelector('.button-loader');
+
+        configForm.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            
+            // Show loading state
+            configButton.disabled = true;
+            buttonText.style.display = 'none';
+            buttonLoader.style.display = 'inline-block';
+            
+            // Hide previous results
+            document.getElementById('configResults').style.display = 'none';
+            document.getElementById('configError').style.display = 'none';
+
+            try {
+                // Create FormData object
+                const formData = new FormData(configForm);
+                
+                // Make API call
+                const response = await fetch('/api/update-agent', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    displayConfigSuccess(result);
+                } else {
+                    displayConfigError(result.detail || 'Configuration failed');
+                }
+                
+            } catch (error) {
+                console.error('Configuration error:', error);
+                displayConfigError('Network error occurred. Please try again.');
+            } finally {
+                // Reset button state
+                configButton.disabled = false;
+                buttonText.style.display = 'inline';
+                buttonLoader.style.display = 'none';
+            }
+        });
+
+        function displayConfigSuccess(result) {
+            const resultContent = document.getElementById('configResultsContent');
+            resultContent.innerHTML = `
+                <div class="result-item">
+                    <strong>🤖 Agent ID:</strong>
+                    <code>${result.agent_id}</code>
+                </div>
+                <div class="result-item">
+                    <strong>📋 Knowledge Base ID:</strong>
+                    <code>${result.knowledge_base_id}</code>
+                </div>
+                <div class="result-item">
+                    <strong>✅ Status:</strong>
+                    <span class="status status-good">Agent successfully configured with your story!</span>
+                </div>
+                <div class="result-item">
+                    <strong>🧠 RAG Status:</strong>
+                    <span class="status status-good">Enabled - Agent can now reference your story content</span>
+                </div>
+            `;
+            document.getElementById('configResults').style.display = 'block';
+        }
+
+        function displayConfigError(message) {
+            document.getElementById('configErrorMessage').innerHTML = `
+                <p>${message}</p>
+                <div class="error-help">
+                    <h4>🔧 Troubleshooting Tips:</h4>
+                    <ul>
+                        <li>Ensure you've uploaded a story first</li>
+                        <li>Check that the Knowledge Base ID is correct</li>
+                        <li>Verify your ElevenLabs API key is configured</li>
+                        <li>Make sure the agent ID exists (if provided)</li>
+                    </ul>
+                </div>
+            `;
+            document.getElementById('configError').style.display = 'block';
+        }
+
+        // Auto-fill from URL parameters if provided
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('kb_id')) {
+            document.getElementById('knowledgeBaseId').value = urlParams.get('kb_id');
+        }
+        if (urlParams.get('kb_name')) {
+            document.getElementById('knowledgeBaseName').value = urlParams.get('kb_name');
+        }
+    </script>
+</body>
+</html> 

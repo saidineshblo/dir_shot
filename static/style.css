@@ -1,0 +1,580 @@
+/* 
+ElevenLabs Story Agent Application - Stylesheet
+Modern, clean design with good UX practices
+*/
+
+/* CSS Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+}
+
+/* Container and Layout */
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 15px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+/* Header Styles */
+.header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding: 30px 0;
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    border-radius: 12px;
+    color: white;
+    margin-bottom: 40px;
+}
+
+.header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.header p {
+    font-size: 1.2rem;
+    opacity: 0.9;
+    font-weight: 300;
+}
+
+/* Section Styles */
+.upload-section,
+.processing-section,
+.conversation-section,
+.error-section {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    margin-bottom: 30px;
+}
+
+.section-description {
+    color: #6c757d;
+    margin-bottom: 25px;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    text-align: center;
+}
+
+/* Form Styles */
+.upload-form {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.form-group {
+    margin-bottom: 25px;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #495057;
+    font-size: 1rem;
+}
+
+.required {
+    color: #dc3545;
+    font-weight: 700;
+}
+
+.form-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: #fff;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* File Upload Styles */
+.file-upload-area {
+    position: relative;
+    border: 3px dashed #dee2e6;
+    border-radius: 12px;
+    padding: 40px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #f8f9fa;
+}
+
+.file-upload-area:hover {
+    border-color: #667eea;
+    background: rgba(102, 126, 234, 0.05);
+}
+
+.file-upload-area.drag-over {
+    border-color: #667eea;
+    background: rgba(102, 126, 234, 0.1);
+    transform: scale(1.02);
+}
+
+.file-upload-area.file-selected {
+    border-color: #28a745;
+    background: rgba(40, 167, 69, 0.05);
+}
+
+.file-input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.file-upload-content {
+    pointer-events: none;
+}
+
+.file-upload-icon {
+    font-size: 3rem;
+    margin-bottom: 15px;
+}
+
+.file-upload-text {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 8px;
+}
+
+.file-upload-details {
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+.file-info {
+    margin-top: 15px;
+}
+
+.selected-file {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: #e8f5e8;
+    border: 1px solid #28a745;
+    border-radius: 8px;
+    color: #155724;
+}
+
+.file-name {
+    font-weight: 600;
+}
+
+.file-size {
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+/* Button Styles */
+.submit-button,
+.reset-button,
+.retry-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 28px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    justify-content: center;
+    min-width: 160px;
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+    display: block;
+}
+
+.submit-button:hover,
+.reset-button:hover,
+.retry-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+.submit-button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.reset-button {
+    background: #6c757d;
+    margin-top: 20px;
+}
+
+.reset-button:hover {
+    box-shadow: 0 8px 25px rgba(108, 117, 125, 0.3);
+}
+
+/* Processing Section Styles */
+.processing-section {
+    text-align: center;
+    padding: 40px 30px;
+}
+
+.processing-content h2 {
+    color: #495057;
+    margin-bottom: 20px;
+    font-size: 1.8rem;
+}
+
+.big-loader {
+    width: 60px;
+    height: 60px;
+    border: 6px solid #f3f3f3;
+    border-top: 6px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 30px;
+}
+
+.processing-steps {
+    margin-top: 30px;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.step {
+    display: flex;
+    align-items: center;
+    padding: 15px 20px;
+    margin-bottom: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.step-icon {
+    font-size: 1.5rem;
+    margin-right: 15px;
+    width: 30px;
+}
+
+.step-text {
+    flex: 1;
+    text-align: left;
+    font-weight: 500;
+    color: #495057;
+}
+
+.step-status {
+    margin-left: 15px;
+    font-size: 1.2rem;
+}
+
+.mini-loader {
+    width: 16px;
+    height: 16px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+/* Conversation Section Styles */
+.conversation-section {
+    text-align: center;
+}
+
+.conversation-header {
+    margin-bottom: 30px;
+}
+
+.conversation-header h2 {
+    color: #495057;
+    margin-bottom: 15px;
+    font-size: 2rem;
+}
+
+.story-info {
+    background: #e8f4fd;
+    padding: 12px 20px;
+    border-radius: 8px;
+    margin: 15px 0;
+    color: #495057;
+    border-left: 4px solid #007bff;
+}
+
+.conversation-description {
+    color: #6c757d;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+
+/* Widget Container */
+.widget-container {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 12px;
+    padding: 40px 20px;
+    margin: 30px 0;
+    border: 2px solid #e9ecef;
+}
+
+.elevenlabs-widget {
+    margin: 20px 0;
+}
+
+/* Quick Instructions */
+.quick-instructions {
+    margin: 30px 0;
+    padding: 25px;
+    background: #fff8e1;
+    border-radius: 8px;
+    border-left: 4px solid #ffc107;
+}
+
+.quick-instructions h3 {
+    color: #495057;
+    margin-bottom: 20px;
+    font-size: 1.3rem;
+}
+
+.tips-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.tip {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    background: white;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.tip-icon {
+    font-size: 1.3rem;
+    margin-right: 10px;
+    width: 25px;
+}
+
+.tip-text {
+    font-size: 0.9rem;
+    color: #495057;
+    font-weight: 500;
+}
+
+/* Reset Section */
+.reset-section {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid #e9ecef;
+}
+
+/* Error Section */
+.error-section {
+    text-align: center;
+    border-left: 5px solid #dc3545;
+}
+
+.error-section h3 {
+    color: #dc3545;
+    margin-bottom: 15px;
+}
+
+.error-content {
+    color: #6c757d;
+    margin-bottom: 20px;
+    font-size: 1.1rem;
+}
+
+/* Loading Animations */
+.button-loader {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #ffffff40;
+    border-top: 2px solid #ffffff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Footer */
+.footer {
+    text-align: center;
+    padding: 30px 20px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    color: #6c757d;
+    margin-top: 40px;
+}
+
+.footer strong {
+    color: #495057;
+}
+
+/* Status Indicators */
+.status {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.status-good {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.status-error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.status-loading {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container {
+        margin: 10px;
+        padding: 15px;
+    }
+    
+    .header h1 {
+        font-size: 2rem;
+    }
+    
+    .header p {
+        font-size: 1rem;
+    }
+    
+    .upload-section,
+    .processing-section,
+    .conversation-section,
+    .error-section {
+        padding: 20px;
+    }
+    
+    .conversation-header h2 {
+        font-size: 1.5rem;
+    }
+    
+    .tips-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .tip {
+        justify-content: center;
+        text-align: center;
+    }
+    
+    .step {
+        padding: 12px 15px;
+    }
+    
+    .step-text {
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .file-upload-area {
+        padding: 30px 15px;
+    }
+    
+    .file-upload-icon {
+        font-size: 2rem;
+    }
+    
+    .submit-button,
+    .reset-button,
+    .retry-button {
+        padding: 12px 20px;
+        font-size: 0.9rem;
+    }
+    
+    .widget-container {
+        padding: 20px 10px;
+    }
+    
+    .processing-content h2 {
+        font-size: 1.5rem;
+    }
+    
+    .big-loader {
+        width: 40px;
+        height: 40px;
+        border-width: 4px;
+    }
+}
+
+/* Additional smooth transitions */
+.upload-section,
+.processing-section,
+.conversation-section,
+.error-section {
+    transition: all 0.3s ease;
+}
+
+/* Widget specific styles */
+elevenlabs-convai {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Processing status text */
+#processingStatus {
+    font-size: 1.1rem;
+    color: #6c757d;
+    margin-bottom: 20px;
+    font-weight: 500;
+} 
